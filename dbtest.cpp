@@ -151,6 +151,27 @@ int main() {
             return 0;
         }, NULL, &errMsg);
 
+    // submission statistics
+    cout << "\n--- Submission Statistics ---" << endl;
+    sqlite3_exec(db,
+        "SELECT "
+        "p.title, "
+        "COUNT(s.id) as total, "
+        "SUM(CASE WHEN s.verdict = 'Accepted' THEN 1 ELSE 0 END) as accepted, "
+        "ROUND(SUM(CASE WHEN s.verdict = 'Accepted' THEN 1 ELSE 0 END) * 100.0 "
+        "/ COUNT(s.id), 1) as acceptance_rate "
+        "FROM problems p "
+        "LEFT JOIN submissions s ON p.id = s.problem_id "
+        "GROUP BY p.id;",
+        [](void*, int, char** data, char**) -> int {
+            cout << "Problem: "         << data[0] << endl;
+            cout << "Total Submissions: "<< data[1] << endl;
+            cout << "Accepted: "        << data[2] << endl;
+            cout << "Acceptance Rate: " << data[3] << "%" << endl;
+            cout << "---" << endl;
+            return 0;
+        }, NULL, &errMsg);        
+
     sqlite3_close(db);
     cout << "\nDone" << endl;
     return 0;
