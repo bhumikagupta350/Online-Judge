@@ -166,44 +166,43 @@ string runTestCase(string input, string expectedOutput) {
 
 // ── judge all test cases ──────────────────────────────────
 
-string judgeSubmission(sqlite3* db, string code, int problemId) {
-    // write code to file
-    writeFile("solution.cpp", code);
+string compileError = "";
 
-    // kill stale process
+string judgeSubmission(sqlite3* db, string code, int problemId) {
+    writeFile("solution.cpp", code);
     system("taskkill /F /IM solution.exe >nul 2>&1");
 
-    // compile once
+    // use full path so redirection works regardless of directory
     int compileResult = system(
-        "g++ solution.cpp -o solution.exe >nul 2>&1");
-    if(compileResult != 0) return "Compilation Error";
+        "cmd.exe /c \"cd C:\\Users\\HP\\.vscode\\Code^ Judge "
+        "&& g++ solution.cpp -o solution.exe "
+        "2>compile_error.txt\"");
 
-    // load test cases
+    if(compileResult != 0) {
+        compileError = readFile(
+            "C:\\Users\\HP\\.vscode\\Code Judge\\compile_error.txt");
+        cout << "Compile error: " << compileError << endl;
+        return "Compilation Error";
+    }
+
+    compileError = "";
     loadTestCases(db, problemId);
 
-    if(testCases.empty()) {
-        return "No Test Cases Found";
-    }
+    if(testCases.empty()) return "No Test Cases Found";
 
     cout << "  Running " << testCases.size()
          << " test case(s)..." << endl;
 
-    // run each test case
     for(int i = 0; i < testCases.size(); i++) {
         cout << "  Test case " << i + 1 << ": ";
-
         string verdict = runTestCase(
             testCases[i].input,
             testCases[i].expectedOutput
         );
-
         cout << verdict << endl;
-
-        // first failure stops everything
         if(verdict != "Accepted") return verdict;
     }
 
-    // all passed
     return "Accepted";
 }
 
@@ -243,10 +242,31 @@ void saveToSubmissions(sqlite3* db, int problemId,
         if(c == '\'') escaped += "''";
         else escaped += c;
     }
+
+    // escape compile error message too
+    string escapedError = "";
+    for(char c : compileError) {
+        if(c == '\'') escapedError += "''";
+        else escapedError += c;
+    }
+
+    // store verdict + error message together
+    string fullVerdict = verdict;
+    if(verdict == "Compilation Error" && !compileError.empty()) {
+        fullVerdict = "Compilation Error: " + compileError;
+    }
+
+    // escape the full verdict
+    string escapedVerdict = "";
+    for(char c : fullVerdict) {
+        if(c == '\'') escapedVerdict += "''";
+        else escapedVerdict += c;
+    }
+
     string query =
         "INSERT INTO submissions (problem_id, code, verdict) "
         "VALUES (" + to_string(problemId) + ", '"
-        + escaped + "', '" + verdict + "');";
+        + escaped + "', '" + escapedVerdict + "');";
     char* errMsg;
     sqlite3_exec(db, query.c_str(), NULL, NULL, &errMsg);
 }
