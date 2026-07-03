@@ -95,17 +95,67 @@ string runTestCase(string input, string expectedOutput) {
 
     if(!success) return "Runtime Error";
 
-    DWORD result = WaitForSingleObject(pi.hProcess, timeLimit * 1000);
+    // ── Job Object for memory limit ───────────────────────
+
+    // create a job object
+    HANDLE hJob = CreateJobObject(NULL, NULL);
+
+    if(hJob != NULL) {
+        // set memory limit — 256MB
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
+        ZeroMemory(&jeli, sizeof(jeli));
+
+        jeli.BasicLimitInformation.LimitFlags =
+            JOB_OBJECT_LIMIT_PROCESS_MEMORY;
+
+        // 256MB in bytes
+        jeli.ProcessMemoryLimit = 256 * 1024 * 1024;
+
+        SetInformationJobObject(
+            hJob,
+            JobObjectExtendedLimitInformation,
+            &jeli,
+            sizeof(jeli)
+        );
+
+        // assign solution process to job
+        AssignProcessToJobObject(hJob, pi.hProcess);
+    }
+
+    // ── time limit check (same as before) ─────────────────
+
+    DWORD result = WaitForSingleObject(pi.hProcess,
+                                       timeLimit * 1000);
 
     if(result == WAIT_TIMEOUT) {
         TerminateProcess(pi.hProcess, 0);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
+        if(hJob) CloseHandle(hJob);
         return "Time Limit Exceeded";
     }
 
+    // ── check if process was killed by memory limit ────────
+
+    DWORD exitCode;
+    GetExitCodeProcess(pi.hProcess, &exitCode);
+
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+    if(hJob) CloseHandle(hJob);
+
+    // exit code 1 with no timeout = likely memory limit hit
+    // Windows kills the process when memory limit exceeded
+    if(exitCode != 0) {
+        // check if it was a memory issue by trying to
+        // read output — if empty and non-zero exit, MLE
+        string outStr = readFile("output.txt");
+        if(trim(outStr).empty()) {
+            return "Memory Limit Exceeded";
+        }
+    }
+
+    // ── compare output ─────────────────────────────────────
 
     string outStr  = readFile("output.txt");
     string expStr  = readFile("expected.txt");
