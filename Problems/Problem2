@@ -1,0 +1,22 @@
+# Problem 2 - Check Even or Odd
+
+## Description
+Given an integer N, print Even if it is even, otherwise print Odd.
+
+## Input Format
+Single integer N
+
+## Output Format
+Even or Odd
+
+## Examples
+Input: 4
+Output: Even
+
+Input: 7
+Output: Odd
+
+## Constraints
+-10^6 <= N <= 10^6
+Time Limit: 2 seconds
+Memory Limit: 256MB
