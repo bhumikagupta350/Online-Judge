@@ -59,7 +59,9 @@ int main() {
         NULL, NULL, &errMsg);
     cout << "Queue table created" << endl;
 
-    // insert problem 1
+    // ── Insert Problems ───────────────────────────────────────
+
+    // existing problem 1
     sqlite3_exec(db,
         "INSERT INTO problems (title, description, difficulty, time_limit) "
         "SELECT 'Square a Number', "
@@ -69,7 +71,7 @@ int main() {
         "(SELECT 1 FROM problems WHERE title = 'Square a Number');",
         NULL, NULL, &errMsg);
 
-    // insert problem 2
+    // existing problem 2
     sqlite3_exec(db,
         "INSERT INTO problems (title, description, difficulty, time_limit) "
         "SELECT 'Check Even or Odd', "
@@ -78,52 +80,280 @@ int main() {
         "WHERE NOT EXISTS "
         "(SELECT 1 FROM problems WHERE title = 'Check Even or Odd');",
         NULL, NULL, &errMsg);
+
+    // new problems
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Reverse a String', "
+        "'Given a string, print it in reverse.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Reverse a String');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Check Prime', "
+        "'Given an integer N, print Prime if it is prime, otherwise print Not Prime.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Check Prime');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Fibonacci Nth Term', "
+        "'Given N, print the Nth Fibonacci number. Sequence starts 0 1 1 2 3 5 8...', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Fibonacci Nth Term');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Factorial', "
+        "'Given an integer N, print its factorial.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Factorial');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Palindrome Check', "
+        "'Given an integer N, print Yes if it is a palindrome, otherwise print No.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Palindrome Check');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Count Vowels', "
+        "'Given a string, print the count of vowels in it.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Count Vowels');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Find Maximum in Array', "
+        "'First line contains N. Second line contains N integers. Print the maximum.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Find Maximum in Array');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Sum of Digits', "
+        "'Given an integer N, print the sum of its digits.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Sum of Digits');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Armstrong Number', "
+        "'Given an integer N, print Yes if it is an Armstrong number, otherwise No. "
+        "An Armstrong number equals the sum of its digits each raised to the power "
+        "of the number of digits. Example: 153 = 1^3 + 5^3 + 3^3.', "
+        "'Easy', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Armstrong Number');",
+        NULL, NULL, &errMsg);
+
     cout << "Problems inserted" << endl;
 
-    // insert test cases for problem 1 (Square a Number)
-    // 3 test cases
+    // ── Insert Test Cases ─────────────────────────────────────
+
+    // Problem 1 - Square a Number
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 1, '5', '25' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 1 AND input = '5');",
+        "SELECT 1, '5', '25' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=1 AND input='5');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 1, '3', '9' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=1 AND input='3');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 1, '10', '100' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=1 AND input='10');",
         NULL, NULL, &errMsg);
 
+    // Problem 2 - Check Even or Odd
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 1, '3', '9' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 1 AND input = '3');",
+        "SELECT 2, '4', 'Even' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=2 AND input='4');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 2, '7', 'Odd' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=2 AND input='7');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 2, '0', 'Even' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=2 AND input='0');",
         NULL, NULL, &errMsg);
 
+    // Problem 3 - Reverse a String
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 1, '10', '100' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 1 AND input = '10');",
+        "SELECT 3, 'hello', 'olleh' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=3 AND input='hello');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 3, 'world', 'dlrow' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=3 AND input='world');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 3, 'abcde', 'edcba' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=3 AND input='abcde');",
         NULL, NULL, &errMsg);
 
-    // insert test cases for problem 2 (Even or Odd)
-    // 3 test cases
+    // Problem 4 - Check Prime
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 2, '4', 'Even' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 2 AND input = '4');",
+        "SELECT 4, '7', 'Prime' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=4 AND input='7');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 4, '4', 'Not Prime' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=4 AND input='4');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 4, '1', 'Not Prime' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=4 AND input='1');",
         NULL, NULL, &errMsg);
 
+    // Problem 5 - Fibonacci Nth Term
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 2, '7', 'Odd' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 2 AND input = '7');",
+        "SELECT 5, '1', '0' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=5 AND input='1');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 5, '5', '3' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=5 AND input='5');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 5, '7', '8' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=5 AND input='7');",
         NULL, NULL, &errMsg);
 
+    // Problem 6 - Factorial
     sqlite3_exec(db,
         "INSERT INTO test_cases (problem_id, input, expected_output) "
-        "SELECT 2, '0', 'Even' "
-        "WHERE NOT EXISTS "
-        "(SELECT 1 FROM test_cases WHERE problem_id = 2 AND input = '0');",
+        "SELECT 6, '5', '120' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=6 AND input='5');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 6, '0', '1' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=6 AND input='0');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 6, '7', '5040' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=6 AND input='7');",
+        NULL, NULL, &errMsg);
+
+    // Problem 7 - Palindrome Check
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 7, '121', 'Yes' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=7 AND input='121');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 7, '123', 'No' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=7 AND input='123');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 7, '1001', 'Yes' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=7 AND input='1001');",
+        NULL, NULL, &errMsg);
+
+    // Problem 8 - Count Vowels
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 8, 'hello', '2' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=8 AND input='hello');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 8, 'aeiou', '5' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=8 AND input='aeiou');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 8, 'rhythm', '0' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=8 AND input='rhythm');",
+        NULL, NULL, &errMsg);
+
+    // Problem 9 - Find Maximum in Array
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 9, '5\n3 7 1 9 4', '9' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=9 AND expected_output='9');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 9, '3\n10 20 15', '20' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=9 AND expected_output='20');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 9, '4\n-1 -5 -2 -3', '-1' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=9 AND expected_output='-1');",
+        NULL, NULL, &errMsg);
+
+    // Problem 10 - Sum of Digits
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 10, '1234', '10' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=10 AND input='1234');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 10, '999', '27' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=10 AND input='999');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 10, '100', '1' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=10 AND input='100');",
+        NULL, NULL, &errMsg);
+
+    // Problem 11 - Armstrong Number
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 11, '153', 'Yes' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=11 AND input='153');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 11, '123', 'No' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=11 AND input='123');",
+        NULL, NULL, &errMsg);
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 11, '370', 'Yes' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=11 AND input='370');",
         NULL, NULL, &errMsg);
 
     cout << "Test cases inserted" << endl;
