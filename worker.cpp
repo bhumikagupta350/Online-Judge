@@ -157,11 +157,13 @@ string runTestCase(string input, string expectedOutput) {
 
     // ── compare output ─────────────────────────────────────
 
-    string outStr  = readFile("output.txt");
-    string expStr  = readFile("expected.txt");
+    string outStr = readFile("output.txt");
+    string expStr = readFile("expected.txt");
 
     if(trim(outStr) == trim(expStr)) return "Accepted";
-    return "Wrong Answer";
+
+    // include details in the verdict string
+    return "Wrong Answer|" + trim(outStr) + "|" + trim(expStr);
 }
 
 // ── judge all test cases ──────────────────────────────────
@@ -195,12 +197,32 @@ string judgeSubmission(sqlite3* db, string code, int problemId) {
 
     for(int i = 0; i < testCases.size(); i++) {
         cout << "  Test case " << i + 1 << ": ";
-        string verdict = runTestCase(
+
+        string result = runTestCase(
             testCases[i].input,
             testCases[i].expectedOutput
         );
-        cout << verdict << endl;
-        if(verdict != "Accepted") return verdict;
+
+        // check if Wrong Answer with details
+        if(result.find("Wrong Answer|") == 0) {
+            // extract your output and expected
+            string details = result.substr(13); // skip "Wrong Answer|"
+            int sep = details.find("|");
+            string yourOutput  = details.substr(0, sep);
+            string expOutput   = details.substr(sep + 1);
+
+            cout << "Wrong Answer" << endl;
+            cout << "    Failed on test case " << i + 1 << endl;
+            cout << "    Your output: " << yourOutput << endl;
+            cout << "    Expected:    " << expOutput  << endl;
+
+            // store clean verdict in database
+            return "Wrong Answer (test case " + 
+                to_string(i + 1) + ")";
+        }
+
+        cout << result << endl;
+        if(result != "Accepted") return result;
     }
 
     return "Accepted";
