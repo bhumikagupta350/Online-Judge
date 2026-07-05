@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Judge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        /* ── navbar ── */
+        nav {
+            background: #16213e;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+        }
+        nav h1 {
+            font-size: 22px;
+            color: #e94560;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        nav span {
+            margin-left: 10px;
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        /* ── main container ── */
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-title {
+            font-size: 26px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .page-subtitle {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        /* ── stats bar ── */
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            min-width: 100px;
+        }
+        .stat-card .num {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e94560;
+        }
+        .stat-card .label {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 2px;
+        }
+
+        /* ── problem table ── */
+        .problem-table {
+            background: #16213e;
+            border-radius: 12px;
+            border: 1px solid #0f3460;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 100px 120px;
+            padding: 14px 20px;
+            background: #0f3460;
+            font-size: 12px;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .problem-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 100px 120px;
+            padding: 16px 20px;
+            border-bottom: 1px solid #0f3460;
+            cursor: pointer;
+            transition: background 0.15s;
+            align-items: center;
+        }
+        .problem-row:last-child { border-bottom: none; }
+        .problem-row:hover { background: #1a2a4a; }
+
+        .problem-id {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .problem-title {
+            color: #58a6ff;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .problem-title:hover { color: #79b8ff; }
+
+        .difficulty {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            text-align: center;
+        }
+        .Easy   { background: #1a4a2a; color: #4caf50; }
+        .Medium { background: #4a3a1a; color: #ff9800; }
+        .Hard   { background: #4a1a1a; color: #f44336; }
+
+        .acceptance {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        /* ── loading ── */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #aaa;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>⚡ CodeJudge</h1>
+    <span>Online Judge Platform</span>
+</nav>
+
+<div class="container">
+    <div class="page-title">Problems</div>
+    <div class="page-subtitle">
+        Solve problems. Get instant feedback.
+    </div>
+
+    <!-- stats bar -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="num" id="total-problems">—</div>
+            <div class="label">Problems</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="total-submissions">—</div>
+            <div class="label">Submissions</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="total-accepted">—</div>
+            <div class="label">Accepted</div>
+        </div>
+    </div>
+
+    <!-- problem list -->
+    <div class="problem-table">
+        <div class="table-header">
+            <span>#</span>
+            <span>Title</span>
+            <span>Difficulty</span>
+            <span>Acceptance</span>
+        </div>
+        <div id="problem-list">
+            <div class="loading">Loading problems...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // fetch all problems from Python server
+    fetch('http://localhost:8000/problems')
+        .then(r => r.json())
+        .then(problems => {
+            // update stats
+            let totalSubs = problems.reduce(
+                (sum, p) => sum + p.total, 0);
+            let totalAcc  = problems.reduce(
+                (sum, p) => sum + p.accepted, 0);
+
+            document.getElementById(
+                'total-problems').textContent = problems.length;
+            document.getElementById(
+                'total-submissions').textContent = totalSubs;
+            document.getElementById(
+                'total-accepted').textContent = totalAcc;
+
+            // build problem rows
+            const list = document.getElementById('problem-list');
+            list.innerHTML = '';
+
+            problems.forEach(p => {
+                const rate = p.total > 0
+                    ? p.rate + '%'
+                    : 'N/A';
+
+                const row = document.createElement('div');
+                row.className = 'problem-row';
+                row.innerHTML = `
+                    <span class="problem-id">${p.id}</span>
+                    <span>
+                        <a class="problem-title"
+                           href="problem.html?id=${p.id}">
+                            ${p.title}
+                        </a>
+                    </span>
+                    <span>
+                        <span class="difficulty ${p.difficulty}">
+                            ${p.difficulty}
+                        </span>
+                    </span>
+                    <span class="acceptance">${rate}</span>
+                `;
+
+                // clicking row goes to problem page
+                row.addEventListener('click', () => {
+                    window.location.href =
+                        `problem.html?id=${p.id}`;
+                });
+
+                list.appendChild(row);
+            });
+        })
+        .catch(err => {
+            document.getElementById('problem-list').innerHTML =
+                '<div class="loading">Failed to load problems. ' +
+                'Is the server running?</div>';
+        });
+</script>
+
+</body>
+</html>
