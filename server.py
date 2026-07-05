@@ -178,6 +178,7 @@ class JudgeHandler(BaseHTTPRequestHandler):
             # run submit.exe to add to queue
             subprocess.run(
                 [os.path.join(BASE_DIR, "submit.exe")],
+                str(problem_id)],
                 cwd=BASE_DIR,
                 capture_output=True
             )
