@@ -356,6 +356,92 @@ int main() {
         "(SELECT 1 FROM test_cases WHERE problem_id=11 AND input='370');",
         NULL, NULL, &errMsg);
 
+    // Problem 12 - Two Sum
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Two Sum', "
+        "'Given an array of N integers and a target T, find two numbers "
+        "that add up to T. Print their indices (0-based), smaller index "
+        "first. Exactly one solution is guaranteed.', "
+        "'Medium', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Two Sum');",
+        NULL, NULL, &errMsg);
+
+    // Problem 13 - Find Middle of Linked List
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Find Middle of Linked List', "
+        "'Given N nodes of a linked list, find and print the value of the "
+        "middle node. For even length lists, print the second middle node.', "
+        "'Medium', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = "
+        "'Find Middle of Linked List');",
+        NULL, NULL, &errMsg);
+
+    cout << "Medium problems inserted" << endl;
+
+    // Test cases for Problem 12 - Two Sum
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 12, '4 9\n2 7 11 15', '0 1' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=12 "
+        "AND expected_output='0 1');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 12, '4 6\n3 2 4 6', '1 2' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=12 "
+        "AND expected_output='1 2');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 12, '3 6\n3 3 4', '0 1' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=12 "
+        "AND expected_output='0 1' AND input='3 6\n3 3 4');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 12, '5 10\n1 4 3 6 2', '1 3' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=12 "
+        "AND expected_output='1 3');",
+        NULL, NULL, &errMsg);
+
+    // Test cases for Problem 13 - Find Middle of Linked List
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 13, '5\n1 2 3 4 5', '3' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=13 "
+        "AND input='5\n1 2 3 4 5');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 13, '4\n1 2 3 4', '3' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=13 "
+        "AND input='4\n1 2 3 4');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 13, '1\n5', '5' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=13 "
+        "AND input='1\n5');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 13, '6\n1 2 3 4 5 6', '4' WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=13 "
+        "AND input='6\n1 2 3 4 5 6');",
+        NULL, NULL, &errMsg);
+
+    cout << "Medium test cases inserted" << endl;
+
     cout << "Test cases inserted" << endl;
 
     // verify problems
