@@ -442,6 +442,101 @@ int main() {
 
     cout << "Medium test cases inserted" << endl;
 
+    // Problem 14 - Number of Islands
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Number of Islands', "
+        "'Given a grid of R rows and C columns containing 0s and 1s, "
+        "count the number of islands. An island is a group of connected "
+        "1s (horizontally or vertically adjacent).', "
+        "'Hard', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = 'Number of Islands');",
+        NULL, NULL, &errMsg);
+
+    // Problem 15 - Shortest Path in Binary Grid
+    sqlite3_exec(db,
+        "INSERT INTO problems (title, description, difficulty, time_limit) "
+        "SELECT 'Shortest Path in Binary Grid', "
+        "'Given an N x N grid of 0s and 1s, find the shortest path from "
+        "top-left (0,0) to bottom-right (N-1,N-1). Move in 8 directions. "
+        "0 = free, 1 = blocked. Print path length or -1 if impossible.', "
+        "'Hard', 2 "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM problems WHERE title = "
+        "'Shortest Path in Binary Grid');",
+        NULL, NULL, &errMsg);
+
+    cout << "Hard problems inserted" << endl;
+
+    // Test cases for Problem 14 - Number of Islands
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 14, '4 5\n1 1 0 0 0\n1 1 0 0 0\n0 0 1 0 0\n0 0 0 1 1', '3' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=14 "
+        "AND expected_output='3');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 14, '3 3\n1 1 1\n0 1 0\n1 1 1', '1' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=14 "
+        "AND expected_output='1');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 14, '3 3\n1 0 1\n0 0 0\n1 0 1', '4' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=14 "
+        "AND expected_output='4');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 14, '2 2\n0 0\n0 0', '0' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=14 "
+        "AND expected_output='0');",
+        NULL, NULL, &errMsg);
+
+    // Test cases for Problem 15 - Shortest Path in Binary Grid
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 15, '3\n0 0 0\n1 1 0\n1 1 0', '4' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=15 "
+        "AND expected_output='4');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 15, '3\n0 1 0\n1 1 0\n1 1 0', '-1' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=15 "
+        "AND expected_output='-1');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 15, '1\n0', '1' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=15 "
+        "AND expected_output='1');",
+        NULL, NULL, &errMsg);
+
+    sqlite3_exec(db,
+        "INSERT INTO test_cases (problem_id, input, expected_output) "
+        "SELECT 15, '4\n0 0 0 0\n1 1 1 0\n1 1 1 0\n1 1 1 0', '6' "
+        "WHERE NOT EXISTS "
+        "(SELECT 1 FROM test_cases WHERE problem_id=15 "
+        "AND expected_output='6');",
+        NULL, NULL, &errMsg);
+
+    cout << "Hard test cases inserted" << endl;
+
     cout << "Test cases inserted" << endl;
 
     // verify problems
