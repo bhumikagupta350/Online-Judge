@@ -1,3 +1,5 @@
+#define WINVER 0x0600
+#define _WIN32_WINNT 0x0600
 #include <iostream>
 #include <windows.h>
 #include <fstream>
@@ -75,7 +77,8 @@ void loadProblem(sqlite3* db, int problemId) {
 
 // ── run one test case ─────────────────────────────────────
 
-string runTestCase(string input, string expectedOutput) {
+string runTestCase(string input, string expectedOutput,
+                   ULONGLONG &execTime) {
     writeFile("input.txt", input);
     writeFile("expected.txt", expectedOutput);
 
@@ -93,49 +96,45 @@ string runTestCase(string input, string expectedOutput) {
         workingDir, &si, &pi
     );
 
-    if(!success) return "Runtime Error";
+    if(!success) {
+        execTime = 0;
+        return "Runtime Error";
+    }
 
     // ── Job Object for memory limit ───────────────────────
-
-    // create a job object
     HANDLE hJob = CreateJobObject(NULL, NULL);
-
     if(hJob != NULL) {
-        // set memory limit — 256MB
         JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli;
         ZeroMemory(&jeli, sizeof(jeli));
-
         jeli.BasicLimitInformation.LimitFlags =
             JOB_OBJECT_LIMIT_PROCESS_MEMORY;
-
-        // 256MB in bytes
         jeli.ProcessMemoryLimit = 256 * 1024 * 1024;
-
         SetInformationJobObject(
             hJob,
             JobObjectExtendedLimitInformation,
-            &jeli,
-            sizeof(jeli)
+            &jeli, sizeof(jeli)
         );
-
-        // assign solution process to job
         AssignProcessToJobObject(hJob, pi.hProcess);
     }
 
-    // ── time limit check (same as before) ─────────────────
+    // ── start timer ───────────────────────────────────────
+    ULONGLONG startTime = GetTickCount();
 
     DWORD result = WaitForSingleObject(pi.hProcess,
                                        timeLimit * 1000);
+
+    // ── stop timer ────────────────────────────────────────
+    ULONGLONG endTime = GetTickCount();
+    execTime = endTime - startTime;
 
     if(result == WAIT_TIMEOUT) {
         TerminateProcess(pi.hProcess, 0);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         if(hJob) CloseHandle(hJob);
+        execTime = timeLimit * 1000; // cap at time limit
         return "Time Limit Exceeded";
     }
-
-    // ── check if process was killed by memory limit ────────
 
     DWORD exitCode;
     GetExitCodeProcess(pi.hProcess, &exitCode);
@@ -144,25 +143,18 @@ string runTestCase(string input, string expectedOutput) {
     CloseHandle(pi.hThread);
     if(hJob) CloseHandle(hJob);
 
-    // exit code 1 with no timeout = likely memory limit hit
-    // Windows kills the process when memory limit exceeded
     if(exitCode != 0) {
-        // check if it was a memory issue by trying to
-        // read output — if empty and non-zero exit, MLE
         string outStr = readFile("output.txt");
         if(trim(outStr).empty()) {
             return "Memory Limit Exceeded";
         }
     }
 
-    // ── compare output ─────────────────────────────────────
-
     string outStr = readFile("output.txt");
     string expStr = readFile("expected.txt");
 
     if(trim(outStr) == trim(expStr)) return "Accepted";
 
-    // include details in the verdict string
     return "Wrong Answer|" + trim(outStr) + "|" + trim(expStr);
 }
 
@@ -174,7 +166,6 @@ string judgeSubmission(sqlite3* db, string code, int problemId) {
     writeFile("solution.cpp", code);
     system("taskkill /F /IM solution.exe >nul 2>&1");
 
-    // use full path so redirection works regardless of directory
     int compileResult = system(
         "cmd.exe /c \"cd C:\\Users\\HP\\.vscode\\Code^ Judge "
         "&& g++ solution.cpp -o solution.exe "
@@ -195,37 +186,42 @@ string judgeSubmission(sqlite3* db, string code, int problemId) {
     cout << "  Running " << testCases.size()
          << " test case(s)..." << endl;
 
+    ULONGLONG maxExecTime = 0;  // track max time
+
     for(int i = 0; i < testCases.size(); i++) {
         cout << "  Test case " << i + 1 << ": ";
 
+        ULONGLONG execTime = 0;
         string result = runTestCase(
             testCases[i].input,
-            testCases[i].expectedOutput
+            testCases[i].expectedOutput,
+            execTime
         );
 
-        // check if Wrong Answer with details
+        // track maximum execution time
+        if(execTime > maxExecTime) maxExecTime = execTime;
+
         if(result.find("Wrong Answer|") == 0) {
-            // extract your output and expected
-            string details = result.substr(13); // skip "Wrong Answer|"
+            string details = result.substr(13);
             int sep = details.find("|");
-            string yourOutput  = details.substr(0, sep);
-            string expOutput   = details.substr(sep + 1);
+            string yourOutput = details.substr(0, sep);
+            string expOutput  = details.substr(sep + 1);
 
             cout << "Wrong Answer" << endl;
-            cout << "    Failed on test case " << i + 1 << endl;
+            cout << "    Failed on test case " << i+1 << endl;
             cout << "    Your output: " << yourOutput << endl;
             cout << "    Expected:    " << expOutput  << endl;
 
-            // store clean verdict in database
-            return "Wrong Answer (test case " + 
-                to_string(i + 1) + ")";
+            return "Wrong Answer (test case " +
+                   to_string(i+1) + ")";
         }
 
-        cout << result << endl;
+        cout << result << " (" << execTime << "ms)" << endl;
         if(result != "Accepted") return result;
     }
 
-    return "Accepted";
+    // append max exec time to Accepted verdict
+    return "Accepted|" + to_string(maxExecTime);
 }
 
 // ── database helpers ──────────────────────────────────────
@@ -325,12 +321,24 @@ int main() {
                 pendingSubmission.problemId
             );
 
-            cout << "Final Verdict: " << verdict << endl;
+            // extract execution time from Accepted verdict
+            string finalVerdict = verdict;
+            string execTimeStr  = "0";
+
+            if(verdict.find("Accepted|") == 0) {
+                finalVerdict = "Accepted";
+                execTimeStr  = verdict.substr(9);
+                cout << "Final Verdict: Accepted ("
+                    << execTimeStr << "ms)" << endl;
+            } else {
+                cout << "Final Verdict: " << verdict << endl;
+            }
 
             updateQueueStatus(db, pendingSubmission.id,
-                            "done", verdict);
+                            "done", finalVerdict + 
+                            " | " + execTimeStr + "ms");
             saveToSubmissions(db, pendingSubmission.problemId,
-                            pendingSubmission.code, verdict);
+                            pendingSubmission.code, finalVerdict);
 
             cout << "Submission " << pendingSubmission.id
                  << " done. Waiting for next..." << endl;
