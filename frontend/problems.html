@@ -403,9 +403,13 @@ int main(){
         const box = document.getElementById('verdict-box');
         box.style.display = 'block';
 
-        if(verdict === 'Accepted') {
+        if(verdict.startsWith('Accepted')) {
             box.className = 'verdict-box verdict-accepted';
-            box.innerHTML = '✅ Accepted — All test cases passed!';
+            let timeStr='';
+            if(verdict.includes('|')){
+                timeStr=' - '+verdict.split('|')[1].trim();
+            }
+            box.innerHTML = '✅ Accepted — All test cases passed!'+ timeStr;
         }
         else if(verdict.startsWith('Wrong Answer')) {
             box.className = 'verdict-box verdict-wrong';
