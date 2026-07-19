@@ -249,10 +249,14 @@
             });
         })
         .catch(err => {
-            document.getElementById('problem-list').innerHTML =
-                '<div class="loading">Failed to load problems. ' +
-                'Is the server running?</div>';
-        });
+    document.getElementById('problem-list').innerHTML =
+        '<div class="loading">' +
+        'This is a live demo — to run locally, clone the repo ' +
+        'and start the Python server. ' +
+        '<a href="https://github.com/bhumikagupta350/Online-Judge" ' +
+        'style="color:#58a6ff">View on GitHub</a>' +
+        '</div>';
+});
 </script>
 
 </body>
