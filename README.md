@@ -1,4 +1,9 @@
-# Online-Judge
+# Online Judge
+
+🔗 **Live Demo:** https://bhumikagupta350.github.io/Online-Judge/
+
+> To run locally with full judging functionality, 
+> clone the repo and follow the setup instructions below.
 
 A LeetCode-style code judging platform built in C++.
 
