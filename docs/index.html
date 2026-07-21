@@ -155,6 +155,28 @@
 <nav>
     <h1>⚡ CodeJudge</h1>
     <span>Online Judge Platform</span>
+    <div style="margin-left:auto; display:flex; 
+                align-items:center; gap:16px;">
+        <span id="nav-username" 
+              style="color:#aaa; font-size:14px;"></span>
+        <a id="nav-login" href="login.html"
+           style="color:#58a6ff; text-decoration:none; 
+                  font-size:14px; display:none;">
+            Login
+        </a>
+        <a id="nav-profile" href="#"
+           style="color:#58a6ff; text-decoration:none;
+                  font-size:14px; display:none;"
+           onclick="goToProfile()">
+            Profile
+        </a>
+        <a id="nav-logout" href="#"
+           style="color:#e94560; text-decoration:none;
+                  font-size:14px; display:none;"
+           onclick="logout()">
+            Logout
+        </a>
+    </div>
 </nav>
 
 <div class="container">
@@ -194,12 +216,50 @@
 </div>
 
 <script>
-    // fetch all problems from Python server
     const SERVER = 'http://localhost:8000';
+
+    // ── navbar login/logout logic ─────────────────────────
+    function updateNavbar() {
+        const username = localStorage.getItem('username');
+        const token    = localStorage.getItem('token');
+
+        if(username && token) {
+            document.getElementById('nav-username').textContent =
+                'Hello, ' + username;
+            document.getElementById('nav-profile').style.display =
+                'block';
+            document.getElementById('nav-logout').style.display =
+                'block';
+            document.getElementById('nav-login').style.display =
+                'none';
+        } else {
+            document.getElementById('nav-login').style.display =
+                'block';
+            document.getElementById('nav-profile').style.display =
+                'none';
+            document.getElementById('nav-logout').style.display =
+                'none';
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('user_id');
+        window.location.reload();
+    }
+
+    function goToProfile() {
+        const username = localStorage.getItem('username');
+        window.location.href = 'profile.html?username=' + username;
+    }
+
+    updateNavbar();
+
+    // ── fetch problems ────────────────────────────────────
     fetch(`${SERVER}/problems`)
         .then(r => r.json())
         .then(problems => {
-            // update stats
             let totalSubs = problems.reduce(
                 (sum, p) => sum + p.total, 0);
             let totalAcc  = problems.reduce(
@@ -211,8 +271,7 @@
                 'total-submissions').textContent = totalSubs;
             document.getElementById(
                 'total-accepted').textContent = totalAcc;
-            
-                // build problem rows
+
             const list = document.getElementById('problem-list');
             list.innerHTML = '';
 
@@ -239,7 +298,6 @@
                     <span class="acceptance">${rate}</span>
                 `;
 
-                // clicking row goes to problem page
                 row.addEventListener('click', () => {
                     window.location.href =
                         `problem.html?id=${p.id}`;
@@ -249,14 +307,12 @@
             });
         })
         .catch(err => {
-    document.getElementById('problem-list').innerHTML =
-        '<div class="loading">' +
-        'This is a live demo — to run locally, clone the repo ' +
-        'and start the Python server. ' +
-        '<a href="https://github.com/bhumikagupta350/Online-Judge" ' +
-        'style="color:#58a6ff">View on GitHub</a>' +
-        '</div>';
-});
+            document.getElementById('problem-list').innerHTML =
+                '<div class="loading">This is a live demo — to run locally, clone the repo ' +
+                'and start the Python server. ' +
+                '<a href="https://github.com/bhumikagupta350/Online-Judge" ' +
+                'style="color:#58a6ff">View on GitHub</a></div>';
+        });
 </script>
 
 </body>
