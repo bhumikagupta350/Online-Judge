@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — CodeJudge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            background: #16213e;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+        }
+        nav h1 {
+            font-size: 22px;
+            color: #e94560;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .center {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            color: #aaa;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            background: #0f3460;
+            border: 1px solid #1a4a6a;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #e94560;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #e94560;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover { background: #c73652; }
+        .btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            background: #4a1a1a;
+            color: #f44336;
+            border: 1px solid #f44336;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .success-msg {
+            background: #1a4a2a;
+            color: #4caf50;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .switch-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        .switch-link a {
+            color: #58a6ff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .switch-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1 onclick="window.location.href='index.html'">
+        ⚡ CodeJudge
+    </h1>
+</nav>
+
+<div class="center">
+    <div class="card">
+        <div class="card-title">Welcome back</div>
+        <div class="card-subtitle">
+            Login to track your progress
+        </div>
+
+        <div class="error-msg" id="error-msg"></div>
+        <div class="success-msg" id="success-msg"></div>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username"
+                   placeholder="Enter your username"/>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password"
+                   placeholder="Enter your password"/>
+        </div>
+
+        <button class="btn" id="login-btn"
+                onclick="login()">
+            Login
+        </button>
+
+        <div class="switch-link">
+            Don't have an account?
+            <a href="register.html">Register here</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const SERVER = 'http://localhost:8000';
+
+    // if already logged in go to home
+    if(localStorage.getItem('token')) {
+        window.location.href = 'index.html';
+    }
+
+    function login() {
+        const username = document.getElementById('username')
+                                 .value.trim();
+        const password = document.getElementById('password')
+                                 .value.trim();
+        const btn      = document.getElementById('login-btn');
+        const errMsg   = document.getElementById('error-msg');
+        const sucMsg   = document.getElementById('success-msg');
+
+        errMsg.style.display = 'none';
+        sucMsg.style.display = 'none';
+
+        if(!username || !password) {
+            errMsg.textContent    = 'Please fill in all fields.';
+            errMsg.style.display  = 'block';
+            return;
+        }
+
+        btn.disabled    = true;
+        btn.textContent = 'Logging in...';
+
+        fetch(`${SERVER}/login`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ username, password })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.error) {
+                errMsg.textContent   = data.error;
+                errMsg.style.display = 'block';
+                btn.disabled         = false;
+                btn.textContent      = 'Login';
+                return;
+            }
+
+            // save session to localStorage
+            localStorage.setItem('token',    data.token);
+            localStorage.setItem('username', data.username);
+            localStorage.setItem('user_id',  data.user_id);
+
+            sucMsg.textContent   = 'Login successful! Redirecting...';
+            sucMsg.style.display = 'block';
+
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        })
+        .catch(() => {
+            errMsg.textContent   = 'Could not connect to server.';
+            errMsg.style.display = 'block';
+            btn.disabled         = false;
+            btn.textContent      = 'Login';
+        });
+    }
+
+    // allow Enter key to submit
+    document.addEventListener('keypress', e => {
+        if(e.key === 'Enter') login();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile — CodeJudge</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #16213e;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #0f3460;
+        }
+        nav h1 {
+            font-size: 22px;
+            color: #e94560;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        nav a {
+            margin-left: auto;
+            color: #58a6ff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* ── profile header ── */
+        .profile-header {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 12px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #e94560;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .profile-info h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .profile-info p {
+            font-size: 13px;
+            color: #aaa;
+        }
+
+        /* ── stats cards ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: #e94560;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        /* ── submissions table ── */
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .submissions-table {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 160px 180px;
+            padding: 12px 20px;
+            background: #0f3460;
+            font-size: 12px;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sub-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 160px 180px;
+            padding: 14px 20px;
+            border-bottom: 1px solid #0f3460;
+            align-items: center;
+            font-size: 14px;
+        }
+        .sub-row:last-child { border-bottom: none; }
+
+        .sub-id { color: #aaa; }
+
+        .sub-problem {
+            color: #58a6ff;
+            cursor: pointer;
+        }
+        .sub-problem:hover { text-decoration: underline; }
+
+        .verdict-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        .verdict-Accepted {
+            background: #1a4a2a;
+            color: #4caf50;
+        }
+        .verdict-wrong {
+            background: #4a1a1a;
+            color: #f44336;
+        }
+        .verdict-tle {
+            background: #4a3a1a;
+            color: #ff9800;
+        }
+        .verdict-ce {
+            background: #2a1a4a;
+            color: #9c27b0;
+        }
+
+        .sub-time {
+            color: #aaa;
+            font-size: 12px;
+        }
+
+        .empty-msg {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1 onclick="window.location.href='index.html'">
+        ⚡ CodeJudge
+    </h1>
+    <a href="index.html">← Back to Problems</a>
+</nav>
+
+<div class="container">
+
+    <!-- profile header -->
+    <div class="profile-header" id="profile-header">
+        <div class="loading">Loading profile...</div>
+    </div>
+
+    <!-- stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="num" id="stat-total">—</div>
+            <div class="label">Total Submissions</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="stat-accepted">—</div>
+            <div class="label">Accepted</div>
+        </div>
+        <div class="stat-card">
+            <div class="num" id="stat-rate">—</div>
+            <div class="label">Acceptance Rate</div>
+        </div>
+    </div>
+
+    <!-- recent submissions -->
+    <div class="section-title">Recent Submissions</div>
+    <div class="submissions-table">
+        <div class="table-header">
+            <span>#</span>
+            <span>Problem</span>
+            <span>Verdict</span>
+            <span>Time</span>
+        </div>
+        <div id="submissions-list">
+            <div class="loading">Loading submissions...</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const SERVER   = 'http://localhost:8000';
+    const params   = new URLSearchParams(window.location.search);
+    const username = params.get('username');
+
+    if(!username) {
+        window.location.href = 'index.html';
+    }
+
+    // load profile data
+    fetch(`${SERVER}/profile?username=${username}`)
+        .then(r => r.json())
+        .then(data => {
+            if(data.error) {
+                document.getElementById('profile-header')
+                    .innerHTML = '<div class="loading">User not found.</div>';
+                return;
+            }
+
+            // profile header
+            const initial = data.username.charAt(0).toUpperCase();
+            const joined  = new Date(data.joined)
+                                .toLocaleDateString('en-US', {
+                                    year:  'numeric',
+                                    month: 'long'
+                                });
+
+            document.getElementById('profile-header').innerHTML = `
+                <div class="avatar">${initial}</div>
+                <div class="profile-info">
+                    <h2>${data.username}</h2>
+                    <p>Member since ${joined}</p>
+                </div>
+            `;
+
+            // stats
+            document.getElementById('stat-total').textContent =
+                data.total;
+            document.getElementById('stat-accepted').textContent =
+                data.accepted;
+            document.getElementById('stat-rate').textContent =
+                data.total > 0 ? data.rate + '%' : 'N/A';
+
+            // submissions list
+            const list = document.getElementById('submissions-list');
+
+            if(data.submissions.length === 0) {
+                list.innerHTML =
+                    '<div class="empty-msg">' +
+                    'No submissions yet. ' +
+                    '<a href="index.html" style="color:#58a6ff">' +
+                    'Start solving!</a></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            data.submissions.forEach(s => {
+                // determine verdict style
+                let badgeClass = 'verdict-wrong';
+                if(s.verdict === 'Accepted')
+                    badgeClass = 'verdict-Accepted';
+                else if(s.verdict.startsWith('Time Limit'))
+                    badgeClass = 'verdict-tle';
+                else if(s.verdict.startsWith('Compilation'))
+                    badgeClass = 'verdict-ce';
+
+                // format timestamp
+                const time = new Date(s.timestamp)
+                    .toLocaleString('en-US', {
+                        month:  'short',
+                        day:    'numeric',
+                        hour:   '2-digit',
+                        minute: '2-digit'
+                    });
+
+                const row = document.createElement('div');
+                row.className = 'sub-row';
+                row.innerHTML = `
+                    <span class="sub-id">${s.id}</span>
+                    <span class="sub-problem"
+                          onclick="window.location.href=
+                          'problem.html?id=${s.problem_id}'">
+                        ${s.problem}
+                    </span>
+                    <span>
+                        <span class="verdict-badge ${badgeClass}">
+                            ${s.verdict}
+                        </span>
+                    </span>
+                    <span class="sub-time">${time}</span>
+                `;
+                list.appendChild(row);
+            });
+        })
+        .catch(() => {
+            document.getElementById('profile-header').innerHTML =
+                '<div class="loading">Could not load profile. ' +
+                'Is the server running?</div>';
+        });
+</script>
+
+</body>
+</html>
