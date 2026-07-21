@@ -230,6 +230,7 @@ struct Submission {
     int id;
     int problemId;
     string code;
+    int userId;
 };
 
 Submission pendingSubmission;
@@ -239,6 +240,7 @@ static int submissionCallback(void*, int, char** data, char**) {
     pendingSubmission.id        = atoi(data[0]);
     pendingSubmission.problemId = atoi(data[1]);
     pendingSubmission.code      = data[2];
+    pendingSubmission.userId    = data[3] ? atoi(data[3]) : 0;
     foundSubmission             = true;
     return 0;
 }
@@ -254,41 +256,27 @@ void updateQueueStatus(sqlite3* db, int id,
 }
 
 void saveToSubmissions(sqlite3* db, int problemId,
-                       string code, string verdict) {
+                       string code, string verdict, int userId) {
     string escaped = "";
     for(char c : code) {
         if(c == '\'') escaped += "''";
         else escaped += c;
     }
 
-    // escape compile error message too
-    string escapedError = "";
-    for(char c : compileError) {
-        if(c == '\'') escapedError += "''";
-        else escapedError += c;
-    }
-
-    // store verdict + error message together
-    string fullVerdict = verdict;
-    if(verdict == "Compilation Error" && !compileError.empty()) {
-        fullVerdict = "Compilation Error: " + compileError;
-    }
-
-    // escape the full verdict
     string escapedVerdict = "";
-    for(char c : fullVerdict) {
+    for(char c : verdict) {
         if(c == '\'') escapedVerdict += "''";
         else escapedVerdict += c;
     }
 
     string query =
-        "INSERT INTO submissions (problem_id, code, verdict) "
+        "INSERT INTO submissions (problem_id, code, verdict, user_id) "
         "VALUES (" + to_string(problemId) + ", '"
-        + escaped + "', '" + escapedVerdict + "');";
+        + escaped + "', '" + escapedVerdict + "', "
+        + to_string(userId) + ");";
     char* errMsg;
     sqlite3_exec(db, query.c_str(), NULL, NULL, &errMsg);
 }
-
 // ── main loop ─────────────────────────────────────────────
 
 int main() {
@@ -301,7 +289,7 @@ int main() {
         foundSubmission = false;
 
         sqlite3_exec(db,
-            "SELECT id, problem_id, code FROM queue "
+            "SELECT id, problem_id, code, user_id FROM queue "
             "WHERE status = 'pending' "
             "ORDER BY timestamp ASC LIMIT 1;",
             submissionCallback, NULL, NULL);
@@ -338,7 +326,8 @@ int main() {
                             "done", finalVerdict + 
                             " | " + execTimeStr + "ms");
             saveToSubmissions(db, pendingSubmission.problemId,
-                            pendingSubmission.code, finalVerdict);
+                            pendingSubmission.code, finalVerdict,
+                        pendingSubmission.userId);
 
             cout << "Submission " << pendingSubmission.id
                  << " done. Waiting for next..." << endl;
