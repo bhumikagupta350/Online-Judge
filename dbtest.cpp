@@ -15,6 +15,34 @@ int main() {
     }
     cout << "Database opened successfully" << endl;
 
+    // users table
+    sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "username TEXT UNIQUE NOT NULL,"
+        "password TEXT NOT NULL,"
+        "created_at DATETIME DEFAULT CURRENT_TIMESTAMP);",
+        NULL, NULL, &errMsg);
+    cout << "Users table created" << endl;
+
+    // sessions table
+    sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS sessions ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "user_id INTEGER NOT NULL,"
+        "token TEXT UNIQUE NOT NULL,"
+        "created_at DATETIME DEFAULT CURRENT_TIMESTAMP);",
+        NULL, NULL, &errMsg);
+    cout << "Sessions table created" << endl;
+
+    // add user_id to submissions if not exists
+    sqlite3_exec(db,
+        "ALTER TABLE submissions ADD COLUMN "
+        "user_id INTEGER DEFAULT 0;",
+        NULL, NULL, &errMsg);
+    // ignore error if column already exists
+    cout << "Submissions table updated" << endl;
+
     // create problems table (no expected_output here anymore)
     sqlite3_exec(db,
         "CREATE TABLE IF NOT EXISTS problems ("
