@@ -4,11 +4,20 @@ import sqlite3
 import subprocess
 import os
 import urllib.parse
+import hashlib
+import secrets
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # path to your Code Judge folder
-BASE_DIR = r"C:\Users\HP\.vscode\Code Judge"
-DB_PATH  = os.path.join(BASE_DIR, "judge.db")
+BASE_DIR     = r"C:\Users\HP\.vscode\Code Judge"
+DB_PATH      = os.path.join(BASE_DIR, "judge.db")
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def generate_token():
+    return secrets.token_hex(32)
 
 class JudgeHandler(BaseHTTPRequestHandler):
 
@@ -25,6 +34,20 @@ class JudgeHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", len(body))
         self.end_headers()
         self.wfile.write(body)
+
+    # ── helper: serve HTML file ───────────────────────────
+    def serve_file(self, filename):
+        filepath = os.path.join(FRONTEND_DIR, filename)
+        try:
+            with open(filepath, 'rb') as f:
+                content = f.read()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Length", len(content))
+            self.end_headers()
+            self.wfile.write(content)
+        except FileNotFoundError:
+            self.send_json({"error": "file not found"}, 404)
 
     # ── helper: read POST body ────────────────────────────
     def read_body(self):
@@ -47,8 +70,25 @@ class JudgeHandler(BaseHTTPRequestHandler):
         path   = parsed.path
         params = urllib.parse.parse_qs(parsed.query)
 
+        # ── serve frontend HTML files ─────────────────────
+        if path == '/' or path == '/index.html':
+            self.serve_file('index.html')
+            return
+        elif path == '/problem.html':
+            self.serve_file('problem.html')
+            return
+        elif path == '/login.html':
+            self.serve_file('login.html')
+            return
+        elif path == '/register.html':
+            self.serve_file('register.html')
+            return
+        elif path == '/profile.html':
+            self.serve_file('profile.html')
+            return
+
         # GET /problems — return all problems
-        if path == "/problems":
+        elif path == "/problems":
             conn = sqlite3.connect(DB_PATH)
             conn.row_factory = sqlite3.Row
             cur  = conn.cursor()
@@ -104,8 +144,6 @@ class JudgeHandler(BaseHTTPRequestHandler):
                 conn.close()
                 return
 
-            # get first 2 test cases as examples
-            # (hide the rest as hidden test cases)
             cur.execute(
                 "SELECT input, expected_output "
                 "FROM test_cases WHERE problem_id=? "
@@ -153,6 +191,68 @@ class JudgeHandler(BaseHTTPRequestHandler):
                 "verdict": row["verdict"]
             })
 
+        # GET /profile?username=x — return user stats
+        elif path == "/profile":
+            username = params.get("username", [None])[0]
+            if not username:
+                self.send_json({"error": "username required"}, 400)
+                return
+
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cur  = conn.cursor()
+
+            cur.execute(
+                "SELECT id, username, created_at FROM users "
+                "WHERE username=?", (username,))
+            user = cur.fetchone()
+
+            if not user:
+                self.send_json({"error": "User not found"}, 404)
+                conn.close()
+                return
+
+            cur.execute("""
+                SELECT
+                    COUNT(s.id) as total,
+                    SUM(CASE WHEN s.verdict='Accepted'
+                        THEN 1 ELSE 0 END) as accepted
+                FROM submissions s
+                WHERE s.user_id=?
+            """, (user['id'],))
+            stats = cur.fetchone()
+
+            total    = stats['total']    or 0
+            accepted = stats['accepted'] or 0
+            rate     = round(accepted * 100.0 / total, 1) \
+                       if total > 0 else 0
+
+            cur.execute("""
+                SELECT s.id, p.title, s.verdict, s.timestamp
+                FROM submissions s
+                JOIN problems p ON s.problem_id = p.id
+                WHERE s.user_id=?
+                ORDER BY s.timestamp DESC
+                LIMIT 10
+            """, (user['id'],))
+
+            submissions = [{
+                "id":        row['id'],
+                "problem":   row['title'],
+                "verdict":   row['verdict'],
+                "timestamp": row['timestamp']
+            } for row in cur.fetchall()]
+
+            conn.close()
+            self.send_json({
+                "username":    user['username'],
+                "joined":      user['created_at'],
+                "total":       total,
+                "accepted":    accepted,
+                "rate":        rate,
+                "submissions": submissions
+            })
+
         else:
             self.send_json({"error": "not found"}, 404)
 
@@ -164,6 +264,7 @@ class JudgeHandler(BaseHTTPRequestHandler):
             body       = self.read_body()
             problem_id = body.get("problem_id")
             code       = body.get("code", "")
+            user_id    = body.get("user_id", 0)
 
             if not problem_id or not code:
                 self.send_json(
@@ -177,8 +278,8 @@ class JudgeHandler(BaseHTTPRequestHandler):
 
             # run submit.exe to add to queue
             subprocess.run(
-                [os.path.join(BASE_DIR, "submit.exe")],
-                str(problem_id)],
+                [os.path.join(BASE_DIR, "submit.exe"),
+                 str(problem_id)],
                 cwd=BASE_DIR,
                 capture_output=True
             )
@@ -192,11 +293,115 @@ class JudgeHandler(BaseHTTPRequestHandler):
             )
             row      = cur.fetchone()
             queue_id = row[0] if row else None
+
+            # store user_id in queue row
+            if queue_id and user_id:
+                cur.execute(
+                    "UPDATE queue SET user_id=? WHERE id=?",
+                    (user_id, queue_id))
+                conn.commit()
+
             conn.close()
 
             self.send_json({
                 "queue_id": queue_id,
                 "message":  "Submitted successfully"
+            })
+
+        # POST /register
+        elif self.path == '/register':
+            body     = self.read_body()
+            username = body.get('username', '').strip()
+            password = body.get('password', '').strip()
+
+            if not username or not password:
+                self.send_json(
+                    {"error": "Username and password required"}, 400)
+                return
+
+            if len(username) < 3:
+                self.send_json(
+                    {"error": "Username must be at least 3 characters"},
+                    400)
+                return
+
+            if len(password) < 6:
+                self.send_json(
+                    {"error": "Password must be at least 6 characters"},
+                    400)
+                return
+
+            conn = sqlite3.connect(DB_PATH)
+            cur  = conn.cursor()
+
+            cur.execute(
+                "SELECT id FROM users WHERE username=?", (username,))
+            if cur.fetchone():
+                conn.close()
+                self.send_json(
+                    {"error": "Username already taken"}, 400)
+                return
+
+            hashed = hash_password(password)
+            cur.execute(
+                "INSERT INTO users (username, password) VALUES (?,?)",
+                (username, hashed))
+            conn.commit()
+            user_id = cur.lastrowid
+
+            token = generate_token()
+            cur.execute(
+                "INSERT INTO sessions (user_id, token) VALUES (?,?)",
+                (user_id, token))
+            conn.commit()
+            conn.close()
+
+            self.send_json({
+                "message":  "Registration successful",
+                "token":    token,
+                "username": username,
+                "user_id":  user_id
+            })
+
+        # POST /login
+        elif self.path == '/login':
+            body     = self.read_body()
+            username = body.get('username', '').strip()
+            password = body.get('password', '').strip()
+
+            if not username or not password:
+                self.send_json(
+                    {"error": "Username and password required"}, 400)
+                return
+
+            conn = sqlite3.connect(DB_PATH)
+            conn.row_factory = sqlite3.Row
+            cur  = conn.cursor()
+
+            cur.execute(
+                "SELECT id, password FROM users WHERE username=?",
+                (username,))
+            user = cur.fetchone()
+
+            if not user or \
+               user['password'] != hash_password(password):
+                conn.close()
+                self.send_json(
+                    {"error": "Invalid username or password"}, 401)
+                return
+
+            token = generate_token()
+            cur.execute(
+                "INSERT INTO sessions (user_id, token) VALUES (?,?)",
+                (user['id'], token))
+            conn.commit()
+            conn.close()
+
+            self.send_json({
+                "message":  "Login successful",
+                "token":    token,
+                "username": username,
+                "user_id":  user['id']
             })
 
         else:
